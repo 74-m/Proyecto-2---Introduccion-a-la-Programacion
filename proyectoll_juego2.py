@@ -22,9 +22,75 @@ import tkinter as tk
 import json as js
 import os
 
+#variables globales(se usan más adelante)
+dinero_defensor=100
+objeto_seleccionado=''
+
 #solo son para mostrar esos textos al presionar los botones
 def iniciar_partida(etiqueta_mensaje):
-    etiqueta_mensaje.config(text='Aquí se inicia la partida')#este lo podemos quitar cuando ya se desarrolle esta parte
+    for widget in ventana.winfo_children():
+        widget.destroy()
+    etiqueta_titulo=tk.Label(ventana,text='Preparar Partida',font=('Arial',24))
+    etiqueta_titulo.pack(pady=20)
+
+    etiqueta_defensor=tk.Label(ventana,text='Nombre del defensor')
+    etiqueta_defensor.pack()
+    entrada_defensor=tk.Entry(ventana)
+    entrada_defensor.pack(pady=5)
+
+    etiqueta_atacante=tk.Label(ventana,text='Nombre del Atacante')
+    etiqueta_atacante.pack()
+    entrada_atacante=tk.Entry(ventana)
+    entrada_atacante.pack(pady=5)
+
+    boton=tk.Button(ventana,text='Continuar',command=lambda:verificar_jugadores(entrada_defensor,entrada_atacante))
+    boton.pack(pady=20)
+
+    boton_volver=tk.Button(ventana,text='Volver',command=titulo)
+    boton_volver.pack()
+
+#esto es para colocar el objeto comprado
+def colocar_objeto(fila,columna):
+    global dinero_defensor,objeto_seleccionado,mapa,etiqueta_dinero
+    if objeto_seleccionado=='muro':
+        if dinero_defensor>=10:
+            if mapa[fila][columna]['text']=='':
+                mapa[fila][columna].config(text='M')
+                dinero_defensor-=10
+                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
+
+#es para abrir el mapa de juego
+def abrir_mapa(nombre_defensor,nombre_atacante):
+    global mapa,etiqueta_dinero,dinero_defensor
+    dinero_defensor=100
+    for widget in ventana.winfo_children():
+        widget.destroy()
+
+    barra_defensor=tk.Label(ventana,text=f'{nombre_defensor}| Vida Base:100')
+    barra_defensor.pack(pady=10)
+
+    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante}| Dinero:100')
+    barra_atacante.pack(pady=20)
+
+    etiqueta_dinero=tk.Label(ventana,text=f'Dinero defensor:{dinero_defensor}')
+    etiqueta_dinero.pack(pady=5)
+
+    boton_muro=tk.Button(ventana,text='Comprar muro (10)',command=comprar_muro)
+    boton_muro.pack(pady=10)
+
+    marco_mapa=tk.Frame(ventana)
+    marco_mapa.pack()
+
+    mapa=[]
+
+    for fila in range(10):
+        fila_actual=[]
+        for columna in range(10):
+            casilla=tk.Button(marco_mapa,width=4,height=2,command=lambda f=fila,c=columna:colocar_objeto(f,c))
+            casilla.grid(row=fila,column=columna)
+            fila_actual.append(casilla)
+        mapa.append(fila_actual)
+    mapa[5][5].config(text='B')
 
 def registrar_jugador(): # Funcion para la ventana de registrar jugador
     for label in ventana.winfo_children():
@@ -44,6 +110,7 @@ def registrar_jugador(): # Funcion para la ventana de registrar jugador
     botonregistro.pack(pady=20)
     botonsalir=tk.Button(ventana,text="Volver",command=lambda:titulo())
     botonsalir.pack()
+
 def registrar(nombre,contraseña): # Funcion para guardar los entrys del tkinter en json
     if not nombre.get().strip() or not contraseña.get().strip():
         error=tk.Label(ventana, text="Error, los datos estan vacios")
@@ -68,6 +135,21 @@ def registrar(nombre,contraseña): # Funcion para guardar los entrys del tkinter
         return
     with open(ruta,'w',encoding='utf-8') as archivo:
         js.dump(datos,archivo,indent=4,ensure_ascii=False)
+
+#verifica que los jugadores hayan ingresado el nombre, en caso contrarrio se utliza uno de forma predeterminada
+def verificar_jugadores(entrada_defensor,entrada_atacante):
+    nombre_defensor=entrada_defensor.get().strip()
+    nombre_atacante=entrada_atacante.get().strip()
+    if nombre_defensor=='':
+        nombre_defensor='Defensor'
+    if nombre_atacante=='':
+        nombre_atacante='Atacante'
+    abrir_mapa(nombre_defensor,nombre_atacante)
+
+#permite al defensor comprarar el muro,al seleccionar el botón
+def comprar_muro():
+    global objeto_seleccionado
+    objeto_seleccionado='muro'
         
 def mostrar_top(etiqueta_mensaje):
     etiqueta_mensaje.config(text='Aquí se muestran los top')
@@ -102,8 +184,7 @@ def titulo():#título, es solo para que se vea bien
 
     #mensajes
     etiqueta_mensaje=tk.Label(ventana,text='Bienvenido al juego',font=('Arial',12))
-    etiqueta_mensaje.pack(pady=40)
-    
+    etiqueta_mensaje.pack(pady=40) 
     
 #ventana principal:
 ventana=tk.Tk()
