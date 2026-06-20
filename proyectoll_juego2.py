@@ -2,7 +2,7 @@
 TAREAS:
 _menú(lo marqué con guión porque ya está hecho)
 _registrarse
-.iniciarsesion
+_iniciarsesion
 .juego, se sub divide en:
     .mapa
     .jugadore
@@ -15,12 +15,11 @@ _registrarse
     .facilidades para el jugador
 .tabla mejores jugadores
 '''
-
-# Comentarios(Uselos para comunicacion): Agregue las funciones y ventanas de registro de jugador, tambien converti los labels y todo del titulo en una funcion, asi podemos llamarla siempre que queramos volver al menu
-
 import tkinter as tk
 import json as js
 import os
+import registro
+import login
 
 #variables globales(se usan más adelante)
 dinero_defensor=100
@@ -32,22 +31,37 @@ def iniciar_partida(etiqueta_mensaje):
         widget.destroy()
     etiqueta_titulo=tk.Label(ventana,text='Preparar Partida',font=('Arial',24))
     etiqueta_titulo.pack(pady=20)
-
     etiqueta_defensor=tk.Label(ventana,text='Nombre del defensor')
     etiqueta_defensor.pack()
     entrada_defensor=tk.Entry(ventana)
     entrada_defensor.pack(pady=5)
-
+    clave_defensor=tk.Label(ventana,text='Contraseña del Defensor')
+    clave_defensor.pack()
+    
+    contraseña_defensor=tk.Entry(ventana)
+    contraseña_defensor.pack(pady=5)
+    
     etiqueta_atacante=tk.Label(ventana,text='Nombre del Atacante')
     etiqueta_atacante.pack()
     entrada_atacante=tk.Entry(ventana)
     entrada_atacante.pack(pady=5)
+    
+    clave_atacante=tk.Label(ventana,text='Contraseña del Atacante')
+    clave_atacante.pack()
+    
+    contraseña_atacante=tk.Entry(ventana)
+    contraseña_atacante.pack(pady=5)
 
-    boton=tk.Button(ventana,text='Continuar',command=lambda:verificar_jugadores(entrada_defensor,entrada_atacante))
-    boton.pack(pady=20)
-
+    botoncontinuar=tk.Button(ventana,text='Continuar',command=lambda:checklog(entrada_defensor,entrada_atacante, contraseña_defensor, contraseña_atacante))
+    botoncontinuar.pack(pady=15)
+    boton_registrar=tk.Button(ventana,text='Registrarse',command=lambda:registrar_jugador())
+    boton_registrar.pack(pady=15)
     boton_volver=tk.Button(ventana,text='Volver',command=titulo)
-    boton_volver.pack()
+    boton_volver.pack(pady=15)
+
+def checklog(entrada_defensor,entrada_atacante, contraseña_defensor, contraseña_atacante):
+    if login.verificar_jugadores(entrada_defensor,entrada_atacante, contraseña_defensor, contraseña_atacante,ventana):
+        abrir_mapa(nombre_defensor=entrada_defensor.get().strip(),nombre_atacante=entrada_atacante.get().strip())
 
 #esto es para colocar el objeto comprado
 def colocar_objeto(fila,columna):
@@ -66,10 +80,10 @@ def abrir_mapa(nombre_defensor,nombre_atacante):
     for widget in ventana.winfo_children():
         widget.destroy()
 
-    barra_defensor=tk.Label(ventana,text=f'{nombre_defensor}| Vida Base:100')
+    barra_defensor=tk.Label(ventana,text=f'{nombre_defensor} | Vida Base:100')
     barra_defensor.pack(pady=10)
 
-    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante}| Dinero:100')
+    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante} | Dinero:100')
     barra_atacante.pack(pady=20)
 
     etiqueta_dinero=tk.Label(ventana,text=f'Dinero defensor:{dinero_defensor}')
@@ -92,6 +106,7 @@ def abrir_mapa(nombre_defensor,nombre_atacante):
         mapa.append(fila_actual)
     mapa[5][5].config(text='B')
 
+
 def registrar_jugador(): # Funcion para la ventana de registrar jugador
     for label in ventana.winfo_children():
         label.destroy()
@@ -106,46 +121,10 @@ def registrar_jugador(): # Funcion para la ventana de registrar jugador
     labelcontraseña.pack(pady=2)
     contraseña=tk.Entry(ventana)
     contraseña.pack(pady=5)
-    botonregistro=tk.Button(ventana, text="Registrar",command=lambda:registrar(nombre,contraseña))
+    botonregistro=tk.Button(ventana, text="Registrar",command=lambda:registro.registrar(nombre,contraseña,ventana))
     botonregistro.pack(pady=20)
     botonsalir=tk.Button(ventana,text="Volver",command=lambda:titulo())
     botonsalir.pack()
-
-def registrar(nombre,contraseña): # Funcion para guardar los entrys del tkinter en json
-    if not nombre.get().strip() or not contraseña.get().strip():
-        error=tk.Label(ventana, text="Error, los datos estan vacios")
-        error.pack(pady=20)
-        error.after(1500,error.destroy)
-        return
-    datos = {
-        "nombre":nombre.get().strip(),
-        "contraseña":contraseña.get().strip(),
-        "winsDefensor":0,
-        "winsAtacante":0
-    }
-    carpeta="cuentas"
-    archivo=f"{nombre.get().strip()}.json"
-    ruta=os.path.join(carpeta,archivo)
-    if not os.path.exists(carpeta):
-        os.makedirs(carpeta)
-    if os.path.exists(ruta):
-        error=tk.Label(ventana, text="Error, la cuenta ya existe")
-        error.pack(pady=20)
-        error.after(1500,error.destroy)
-        return
-    with open(ruta,'w',encoding='utf-8') as archivo:
-        js.dump(datos,archivo,indent=4,ensure_ascii=False)
-
-#verifica que los jugadores hayan ingresado el nombre, en caso contrarrio se utliza uno de forma predeterminada
-def verificar_jugadores(entrada_defensor,entrada_atacante):
-    nombre_defensor=entrada_defensor.get().strip()
-    nombre_atacante=entrada_atacante.get().strip()
-    if nombre_defensor=='':
-        nombre_defensor='Defensor'
-    if nombre_atacante=='':
-        nombre_atacante='Atacante'
-    abrir_mapa(nombre_defensor,nombre_atacante)
-
 #permite al defensor comprarar el muro,al seleccionar el botón
 def comprar_muro():
     global objeto_seleccionado
