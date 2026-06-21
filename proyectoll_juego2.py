@@ -29,6 +29,7 @@ from pygame import mixer
 dinero_defensor=200
 dinero_atacante=200
 objeto_seleccionado=''
+vida_base=100
 #Objetos globales de los tipos de torres y tropas para facilitar el cambio de valores en el codigo
 TorreBasica=torre.Basica()
 TorrePesada=torre.Pesada()
@@ -36,6 +37,47 @@ TorreMagica=torre.Magica()
 Soldado=tropas.Soldado()
 Tanque=tropas.Tanque()
 Agil=tropas.Agil()
+
+
+matriz_mapa=[[0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,2,2,2,2,0,0,0],
+      [2,2,2,2,2,2,2,2,2,2],
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0]]
+
+def dibujar_mapa():
+    global mapa,matriz_mapa
+
+    for fila in range(len(matriz_mapa)):
+        for columna in range(len(matriz_mapa[fila])):
+            valor=matriz_mapa[fila][columna]
+            if valor==0:
+                mapa[fila][columna].config(text='')
+            if valor==1:
+                mapa[fila][columna].config(text='M')
+            if valor==2:
+                mapa[fila][columna].config(text='B')
+            if valor==3:
+                mapa[fila][columna].config(text='TB')
+            if valor==4:
+                mapa[fila][columna].config(text='TP')
+            if valor==5:
+                mapa[fila][columna].config(text='TM')
+            if valor==6:
+                mapa[fila][columna].config(text='S')
+            if valor==7:
+                mapa[fila][columna].config(text='T')
+            if valor==8:
+                mapa[fila][columna].config(text='A')
+            if valor==9:
+                mapa[fila][columna].config(text='')
+            if valor==10:
+                mapa[fila][columna].config(text='')
 
 #solo son para mostrar esos textos al presionar los botones
 def iniciar_partida(etiqueta_mensaje): #funcion para los datos antes de iniciar la partidad y checar el estado de logeo
@@ -77,45 +119,60 @@ def checklog(entrada_defensor,entrada_atacante, contraseña_defensor, contraseñ
 
 #esto es para colocar el objeto comprado
 def colocar_objeto(fila,columna):
-    global dinero_defensor,mapa,etiqueta_dinero
+    global dinero_defensor,matriz_mapa,dinero_atacante,etiqueta_dinero
+    #si hay algo en esta casilla, no hacer nada
+    if matriz_mapa[fila][columna]!=0:
+        return
+    if objeto_seleccionado in ['muro',TorreBasica.nombre,TorrePesada.nombre,TorreMagica.nombre]:
+        if fila>4:
+            return
+    if objeto_seleccionado in [ Soldado.nombre,Tanque.nombre,Agil.nombre]:
+        if fila<5:
+            return
     if objeto_seleccionado=='muro':
         if dinero_defensor>=10:
-            if mapa[fila][columna]['text']=='':
-                mapa[fila][columna].config(text='M')
-                dinero_defensor-=10
-                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
-    if objeto_seleccionado==f'{TorreBasica.nombre}':
+            matriz_mapa[fila][columna]=1
+            dinero_defensor-=10
+    elif objeto_seleccionado==TorreBasica.nombre:
         if dinero_defensor>=TorreBasica.costo:
-            if mapa[fila][columna]['text']=='':
-                mapa[fila][columna].config(text='TB')
-                dinero_defensor-=TorreBasica.costo
-                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
-    if objeto_seleccionado==f'{TorrePesada.nombre}':
+            matriz_mapa[fila][columna]=3
+            dinero_defensor-=TorreBasica.costo
+    elif objeto_seleccionado==TorrePesada.nombre:
         if dinero_defensor>=TorrePesada.costo:
-            if mapa[fila][columna]['text']=='':
-                mapa[fila][columna].config(text='TP')
-                dinero_defensor-=TorrePesada.costo
-                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
-    if objeto_seleccionado==f'{TorreMagica.nombre}':
+            matriz_mapa[fila][columna]=4
+            dinero_defensor-=TorrePesada.costo
+    elif objeto_seleccionado==TorreMagica.nombre:
         if dinero_defensor>=TorreMagica.costo:
-            if mapa[fila][columna]['text']=='':
-                mapa[fila][columna].config(text='TM')
-                dinero_defensor-=TorreMagica.costo
-                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
-
+            matriz_mapa[fila][columna]=5
+            dinero_defensor-=TorreMagica.costo
+    elif objeto_seleccionado==Soldado.nombre:
+        if dinero_atacante>=Soldado.costo:
+            matriz_mapa[fila][columna]=6
+            dinero_atacante-=Soldado.costo
+    elif objeto_seleccionado==Tanque.nombre:
+        if dinero_atacante>=Tanque.costo:
+            matriz_mapa[fila][columna]=7
+            dinero_atacante-=Tanque.costo
+    elif objeto_seleccionado==Agil.nombre:
+        if dinero_atacante>=Agil.costo:
+            matriz_mapa[fila][columna]=8
+            dinero_atacante-=Agil.costo
+    etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
+    barra_atacante.config(text=f'Atacante|Dinero:{dinero_atacante}')
+    dibujar_mapa()
 
 #es para abrir el mapa de juego
 def abrir_mapa(nombre_defensor,nombre_atacante):
-    global mapa,etiqueta_dinero,dinero_defensor
+    global mapa,etiqueta_dinero,dinero_defensor,barra_atacante
     
     dinero_defensor=200
     for widget in ventana.winfo_children():
         widget.destroy()
     manejomusica.cambiar_musica(ventana)
-    barra_defensor=tk.Label(ventana,text=f'{nombre_defensor} | Vida Base:100')
+    barra_defensor=tk.Label(ventana,text=f'{nombre_defensor} | Vida Base:{vida_base}')
     barra_defensor.pack(pady=10)
 
-    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante} | Dinero:150')
+    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante} | Dinero:{dinero_atacante}')
     barra_atacante.pack(pady=20)
 
     etiqueta_dinero=tk.Label(ventana,text=f'Dinero defensor:{dinero_defensor}')
@@ -137,22 +194,30 @@ def abrir_mapa(nombre_defensor,nombre_atacante):
 
     mapa=[]
 
-    for fila in range(11):
+    for fila in range(len(matriz_mapa)):
         fila_actual=[]
-        for columna in range(11):
+        for columna in range(len(matriz_mapa[fila])):
             casilla=tk.Button(marco_mapa,width=4,height=2,command=lambda f=fila,c=columna:colocar_objeto(f,c))
             casilla.grid(row=fila,column=columna)
             fila_actual.append(casilla)
         mapa.append(fila_actual)
-    mapa[0][5].config(text='B')
+    dibujar_mapa()
+
+def dañar_base(daño):
+    global vida_base,barra_defensor
+    vida_base-=daño
+    barra_defensor.config(text=f'Vida Base:{vida_base}')
+    if vida_base<=0:
+        print('Gana el atacante')
+
 def turno_ataque(botones):
     for boton in botones:
         boton.destroy()
-    boton_soldado=tk.Button(ventana,text=f'Comprar {Soldado.nombre}({Soldado.costo})',command=lambda:comprar("muro"))
+    boton_soldado=tk.Button(ventana,text=f'Comprar {Soldado.nombre}({Soldado.costo})',command=lambda:comprar(Soldado.nombre))
     boton_soldado.pack(pady=10)
-    boton_tanque=tk.Button(ventana,text=f'Comprar {Tanque.nombre} ({Tanque.costo})',command=lambda:comprar("torre_basica"))
+    boton_tanque=tk.Button(ventana,text=f'Comprar {Tanque.nombre} ({Tanque.costo})',command=lambda:comprar(Tanque.nombre))
     boton_tanque.pack(pady=10)
-    boton_agil=tk.Button(ventana,text=f'Comprar {Agil.nombre} ({Agil.costo})',command=lambda:comprar("torre_pesada"))
+    boton_agil=tk.Button(ventana,text=f'Comprar {Agil.nombre} ({Agil.costo})',command=lambda:comprar(Agil.nombre))
     boton_agil.pack(pady=10)
 def comprar(cosa): # Funcion para comprar a partir del objecto seleccionado
     global objeto_seleccionado
