@@ -5,11 +5,11 @@ _registrarse
 _iniciarsesion
 .juego, se sub divide en:
     .mapa
-    .jugadore
+    .jugadores
     .movimientos
     .ataques
     .vidas
-    .música
+    _música
     .ventanas de gane y pierde
     .graficos
     .facilidades para el jugador
@@ -20,13 +20,25 @@ import json as js
 import os
 import registro
 import login
+import musica
+import torre
+import tropas
+from pygame import mixer
 
 #variables globales(se usan más adelante)
-dinero_defensor=100
+dinero_defensor=200
+dinero_atacante=200
 objeto_seleccionado=''
+#Objetos globales de los tipos de torres y tropas para facilitar el cambio de valores en el codigo
+TorreBasica=torre.Basica()
+TorrePesada=torre.Pesada()
+TorreMagica=torre.Magica()
+Soldado=tropas.Soldado()
+Tanque=tropas.Tanque()
+Agil=tropas.Agil()
 
 #solo son para mostrar esos textos al presionar los botones
-def iniciar_partida(etiqueta_mensaje):
+def iniciar_partida(etiqueta_mensaje): #funcion para los datos antes de iniciar la partidad y checar el estado de logeo
     for widget in ventana.winfo_children():
         widget.destroy()
     etiqueta_titulo=tk.Label(ventana,text='Preparar Partida',font=('Arial',24))
@@ -65,48 +77,86 @@ def checklog(entrada_defensor,entrada_atacante, contraseña_defensor, contraseñ
 
 #esto es para colocar el objeto comprado
 def colocar_objeto(fila,columna):
-    global dinero_defensor,objeto_seleccionado,mapa,etiqueta_dinero
+    global dinero_defensor,mapa,etiqueta_dinero
     if objeto_seleccionado=='muro':
         if dinero_defensor>=10:
             if mapa[fila][columna]['text']=='':
                 mapa[fila][columna].config(text='M')
                 dinero_defensor-=10
                 etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
+    if objeto_seleccionado==f'{TorreBasica.nombre}':
+        if dinero_defensor>=TorreBasica.costo:
+            if mapa[fila][columna]['text']=='':
+                mapa[fila][columna].config(text='TB')
+                dinero_defensor-=TorreBasica.costo
+                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
+    if objeto_seleccionado==f'{TorrePesada.nombre}':
+        if dinero_defensor>=TorrePesada.costo:
+            if mapa[fila][columna]['text']=='':
+                mapa[fila][columna].config(text='TP')
+                dinero_defensor-=TorrePesada.costo
+                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
+    if objeto_seleccionado==f'{TorreMagica.nombre}':
+        if dinero_defensor>=TorreMagica.costo:
+            if mapa[fila][columna]['text']=='':
+                mapa[fila][columna].config(text='TM')
+                dinero_defensor-=TorreMagica.costo
+                etiqueta_dinero.config(text=f'Dinero defensor:{dinero_defensor}')
+
 
 #es para abrir el mapa de juego
 def abrir_mapa(nombre_defensor,nombre_atacante):
     global mapa,etiqueta_dinero,dinero_defensor
-    dinero_defensor=100
+    
+    dinero_defensor=200
     for widget in ventana.winfo_children():
         widget.destroy()
-
+    manejomusica.cambiar_musica(ventana)
     barra_defensor=tk.Label(ventana,text=f'{nombre_defensor} | Vida Base:100')
     barra_defensor.pack(pady=10)
 
-    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante} | Dinero:100')
+    barra_atacante=tk.Label(ventana,text=f'{nombre_atacante} | Dinero:150')
     barra_atacante.pack(pady=20)
 
     etiqueta_dinero=tk.Label(ventana,text=f'Dinero defensor:{dinero_defensor}')
     etiqueta_dinero.pack(pady=5)
 
-    boton_muro=tk.Button(ventana,text='Comprar muro (10)',command=comprar_muro)
+    boton_muro=tk.Button(ventana,text=f'Comprar muro (10)',command=lambda:comprar("muro"))
     boton_muro.pack(pady=10)
+    boton_torre_basica=tk.Button(ventana,text=f'Comprar {TorreBasica.nombre} ({TorreBasica.costo})',command=lambda:comprar(f"{TorreBasica.nombre}"))
+    boton_torre_basica.pack(pady=10)
+    boton_torre_pesada=tk.Button(ventana,text=f'Comprar {TorrePesada.nombre} ({TorrePesada.costo})',command=lambda:comprar(f"{TorrePesada.nombre}"))
+    boton_torre_pesada.pack(pady=10)
+    boton_torre_magica=tk.Button(ventana,text=f'Comprar {TorreMagica.nombre} ({TorreMagica.costo})',command=lambda:comprar(f"{TorreMagica.nombre}"))
+    boton_torre_magica.pack(pady=10)
+    boton_turno=tk.Button(ventana,text='Terminar turno',command=lambda:turno_ataque([boton_muro,boton_torre_basica,boton_torre_pesada,boton_torre_magica, boton_turno]))
+    boton_turno.pack(pady=10)
 
     marco_mapa=tk.Frame(ventana)
-    marco_mapa.pack()
+    marco_mapa.pack(pady=20)
 
     mapa=[]
 
-    for fila in range(10):
+    for fila in range(11):
         fila_actual=[]
-        for columna in range(10):
+        for columna in range(11):
             casilla=tk.Button(marco_mapa,width=4,height=2,command=lambda f=fila,c=columna:colocar_objeto(f,c))
             casilla.grid(row=fila,column=columna)
             fila_actual.append(casilla)
         mapa.append(fila_actual)
-    mapa[5][5].config(text='B')
-
-
+    mapa[0][5].config(text='B')
+def turno_ataque(botones):
+    for boton in botones:
+        boton.destroy()
+    boton_soldado=tk.Button(ventana,text=f'Comprar {Soldado.nombre}({Soldado.costo})',command=lambda:comprar("muro"))
+    boton_soldado.pack(pady=10)
+    boton_tanque=tk.Button(ventana,text=f'Comprar {Tanque.nombre} ({Tanque.costo})',command=lambda:comprar("torre_basica"))
+    boton_tanque.pack(pady=10)
+    boton_agil=tk.Button(ventana,text=f'Comprar {Agil.nombre} ({Agil.costo})',command=lambda:comprar("torre_pesada"))
+    boton_agil.pack(pady=10)
+def comprar(cosa): # Funcion para comprar a partir del objecto seleccionado
+    global objeto_seleccionado
+    objeto_seleccionado=cosa
 def registrar_jugador(): # Funcion para la ventana de registrar jugador
     for label in ventana.winfo_children():
         label.destroy()
@@ -125,10 +175,6 @@ def registrar_jugador(): # Funcion para la ventana de registrar jugador
     botonregistro.pack(pady=20)
     botonsalir=tk.Button(ventana,text="Volver",command=lambda:titulo())
     botonsalir.pack()
-#permite al defensor comprarar el muro,al seleccionar el botón
-def comprar_muro():
-    global objeto_seleccionado
-    objeto_seleccionado='muro'
         
 def mostrar_top(etiqueta_mensaje):
     etiqueta_mensaje.config(text='Aquí se muestran los top')
@@ -144,7 +190,6 @@ def titulo():#título, es solo para que se vea bien
         label.destroy()
     etiqueta_titulo=tk.Label(ventana,text='BATALLA',font=('Arial',24))
     etiqueta_titulo.pack(pady=30)
-
     #botones
     boton_iniciar=tk.Button(ventana,text='Iniciar Partida',command=lambda:iniciar_partida(etiqueta_mensaje))
     boton_iniciar.pack(pady=10)
@@ -157,10 +202,9 @@ def titulo():#título, es solo para que se vea bien
 
     boton_reglas=tk.Button(ventana,text='Reglas',command=lambda: mostrar_reglas(etiqueta_mensaje))
     boton_reglas.pack(pady=10)
-
+    manejomusica.iniciar_musica(ventana)
     boton_salir=tk.Button(ventana,text='Salir',command=ventana.destroy)
     boton_salir.pack(pady=10)
-
     #mensajes
     etiqueta_mensaje=tk.Label(ventana,text='Bienvenido al juego',font=('Arial',12))
     etiqueta_mensaje.pack(pady=40) 
@@ -170,7 +214,7 @@ ventana=tk.Tk()
 ventana.title('Batalla')
 ventana.attributes('-fullscreen',True)
 ventana.bind('<Escape>',salir_pantalla_completa)
-
+manejomusica= musica.Musica()
 titulo()
 
 ventana.mainloop()#para ejecutar
