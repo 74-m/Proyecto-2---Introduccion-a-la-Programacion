@@ -1,8 +1,8 @@
 # Proyecto-2---Introduccion-a-la-Programacion
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Para ejecutar este programa se requiere tener instalado:
+Para ejecutar este programa se requiere:
 
-1.Python 3.12.
+1.Tener instalado Python 3.12.
 
 2.Instalar Pygame.
 
